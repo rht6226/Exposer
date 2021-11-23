@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 func main() {
@@ -13,7 +15,11 @@ func main() {
 		panic(err)
 	}
 
-	informer := GetInformer(clientSet)
+	informer := GetInformer(clientSet.(*kubernetes.Clientset))
 
-	print(informer)
+	ch := make(chan struct{})
+	c := NewController(clientSet, informer.Apps().V1().Deployments())
+
+	informer.Start(ch)
+	c.Run(ch)
 }

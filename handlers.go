@@ -1,9 +1,11 @@
 package main
 
-func HandleAdd(obj interface{}) {
+import "fmt"
 
+func HandleAdd(obj interface{}) {
+	fmt.Println("[INFO]: Add was called")
 }
 
 func HandleDelete(obj interface{}) {
-	
+	fmt.Println("[INFO]: Delete was called")
 }

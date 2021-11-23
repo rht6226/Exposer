@@ -8,25 +8,25 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func GetClientSet(kubeconfig *string) (*kubernetes.Clientset, error) {
+func GetClientSet(kubeconfig *string) (kubernetes.Interface, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 
 	if err != nil {
-		fmt.Println("[ERROR]: No kubeconfig file provided.\n", err.Error())
-		fmt.Println("[INFO]: Now trying to load config from the service account")
+		fmt.Println("[ERROR]: Building config from file\n", err.Error())
 
+		// For this to work we are using default service account.
+		// This account does not have lots of previledges so we will have to create a role and bind it.
 		config, err = rest.InClusterConfig()
 
 		if err != nil {
-			fmt.Println("[ERROR]: Cannot load config from the cluster.")
+			fmt.Println("[ERROR]: Building reading InClusterConfig")
 			return nil, err
 		}
 	}
 
 	clientset, err := kubernetes.NewForConfig(config)
-
 	if err != nil {
-		fmt.Println("[ERROR]: Cannot create clientset from config.")
+		fmt.Println("[ERROR]: Creating new clientset")
 		return nil, err
 	}
 

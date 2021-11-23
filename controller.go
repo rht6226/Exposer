@@ -44,7 +44,9 @@ func (c *controller) Run(ch <-chan struct{}) {
 		fmt.Println("[ERROR]: Waiting for chace to be synced ...")
 	}
 
-	wait.Until(c.Worker, 1*time.Second, ch)
+	go wait.Until(c.Worker, 1*time.Second, ch)
+
+	<-ch
 }
 
 func (c *controller) Worker() {
