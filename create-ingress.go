@@ -9,12 +9,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Creates an ingress for exposing the service supplied to it as argument.
 func (c *controller) CreateIngress(ctx context.Context, svc *corev1.Service) (*netv1.Ingress, error) {
 	pathtype := "Prefix"
 	ingress := netv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      svc.Name,
 			Namespace: svc.Namespace,
+			Annotations: map[string]string{
+				"nginx.ingress.kubernetes.io/rewrite-target": "/",
+			},
 		},
 		Spec: netv1.IngressSpec{
 			Rules: []netv1.IngressRule{

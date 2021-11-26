@@ -13,13 +13,16 @@ import (
 	workqueue "k8s.io/client-go/util/workqueue"
 )
 
+// type controller
 type controller struct {
-	clientset             kubernetes.Interface
-	deploymentLister      applisters.DeploymentLister
-	deploymentCacheSynced cache.InformerSynced
-	queue                 workqueue.RateLimitingInterface
+	clientset             kubernetes.Interface            // Kubernetes Clinetset to interact with different API versions
+	deploymentLister      applisters.DeploymentLister     // DeploymentLister to get all the deployments
+	deploymentCacheSynced cache.InformerSynced            // If the chache is synced or not
+	queue                 workqueue.RateLimitingInterface // Queue to store the jobs
 }
 
+// Create a new controller by providing the clientset
+// and an informer which looks for changes in Deployment resource.
 func NewController(clientset kubernetes.Interface,
 	depInformer appsinformers.DeploymentInformer) *controller {
 	c := &controller{
@@ -39,8 +42,11 @@ func NewController(clientset kubernetes.Interface,
 	return c
 }
 
+// Run runs the controller in a go routine till the stop channel is closed.
+// It also ensures that the cache is synced before the worker is called.
 func (c *controller) Run(ch <-chan struct{}) {
 	fmt.Println("[INFO]: Starting controller...")
+
 	if !cache.WaitForCacheSync(ch, c.deploymentCacheSynced) {
 		fmt.Println("[ERROR]: Waiting for chace to be synced ...")
 	}
@@ -50,11 +56,16 @@ func (c *controller) Run(ch <-chan struct{}) {
 	<-ch
 }
 
+// Worker Infinitely calls the process item function so that the
+// controller can keep processing items added to the queue.
 func (c *controller) Worker() {
 	for c.processItem() {
 	}
 }
 
+// processItem takes items one ata a time from the queue.
+// For each item it calls syncDeploymnt with proper argumets
+// to ensure that proper services, ingress are created/deleted.
 func (c *controller) processItem() bool {
 	item, shutdown := c.queue.Get()
 
@@ -86,6 +97,7 @@ func (c *controller) processItem() bool {
 	return true
 }
 
+// Creates the service and ingress for the givn deployment.
 func (c *controller) syncDeployment(ns, name string) error {
 	ctx := context.Background()
 

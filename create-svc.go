@@ -9,6 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// creates a service for the given deployment
 func (c *controller) CreateService(dep *appsv1.Deployment, ctx context.Context, ns, name string) (*corev1.Service, error) {
 	labels := dep.Spec.Template.Labels
 

@@ -7,6 +7,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
+// Create an informer for given clientset.
 func GetInformer(clientset *kubernetes.Clientset) informers.SharedInformerFactory {
 	return informers.NewSharedInformerFactory(clientset, 10*time.Minute)
 }

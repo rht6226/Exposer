@@ -8,6 +8,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// Get kubernetes clientset from command line
+// or from a default location or from the pod itself.
 func GetClientSet(kubeconfig *string) (kubernetes.Interface, error) {
 	config, err := clientcmd.BuildConfigFromFlags("", *kubeconfig)
 
