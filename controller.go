@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
 	"k8s.io/client-go/kubernetes"
@@ -97,32 +95,17 @@ func (c *controller) syncDeployment(ns, name string) error {
 		return err
 	}
 
-	labels := dep.Spec.Template.Labels
-	// create service
-	// We have to modify it to figure out the port our container is listening on
-	svc := corev1.Service{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      dep.Name,
-			Namespace: dep.Namespace,
-		},
-		Spec: corev1.ServiceSpec{
-			Selector: labels,
-			Ports: []corev1.ServicePort{
-				{
-					Name: "http",
-					Port: 80,
-				},
-			},
-		},
-	}
-
-	_, err = c.clientset.CoreV1().Services(ns).Create(ctx, &svc, metav1.CreateOptions{})
-
+	svc, err := c.CreateService(dep, ctx, ns, name)
 	if err != nil {
-		fmt.Println("[ERROR]: Error creating service.")
+		fmt.Println(err.Error())
 		return err
 	}
-	//create ingress
+
+	_, err = c.CreateIngress(ctx, svc)
+	if err != nil {
+		fmt.Println(err.Error())
+		return err
+	}
 
 	return nil
 }
