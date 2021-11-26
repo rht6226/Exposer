@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
 	"k8s.io/client-go/kubernetes"
@@ -85,6 +87,29 @@ func (c *controller) processItem() bool {
 	if err != nil {
 		fmt.Printf("[ERROR]; splitting key into namespace and name.\n%s", err.Error())
 		return false
+	}
+
+	// check if the object has been deleted from the k8s cluster
+	ctx := context.Background()
+	_, err = c.clientset.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		fmt.Printf("[INFO]: Deployment %s was deleted\n", name)
+
+		// delete service
+		err = c.clientset.CoreV1().Services(ns).Delete(ctx, name, metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Println("[ERROR] deleting the service\n", err.Error())
+			return false
+		}
+
+		// delete ingress
+		err = c.clientset.NetworkingV1().Ingresses(ns).Delete(ctx, name, metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Println("[ERROR] deleting the ingress\n", err.Error())
+			return false
+		}
+
+		return true
 	}
 
 	err = c.syncDeployment(ns, name)
